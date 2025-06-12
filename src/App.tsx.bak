@@ -1,0 +1,289 @@
+import { useState } from 'react';
+import { 
+  Container, 
+  Box, 
+  Typography, 
+  TextField, 
+  Button, 
+  Paper,
+  CircularProgress,
+  Alert,
+  Card,
+  CardContent,
+  Tooltip,
+  IconButton
+} from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import Web3 from 'web3';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#2196f3',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Pretendard',
+      '-apple-system',
+      'BlinkMacSystemFont',
+      'system-ui',
+      'Roboto',
+      'sans-serif'
+    ].join(','),
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 8,
+          },
+        },
+      },
+    },
+  },
+});
+
+// KaiaToken 컨트랙트 ABI
+const KaiaTokenABI = [
+  "constructor(string memory name, string memory symbol, address initialOwner)",
+  "function burn(uint256 amount) public",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+  "event Approval(address indexed owner, address indexed spender, uint256 value)"
+];
+
+// KaiaToken 컨트랙트 바이트코드
+const KaiaTokenBytecode = "0x608060405234801561001057600080fd5b506040516107e83803806107e883398101604081905261002f916100d4565b600380546001600160a01b0319166001600160a01b038316908117909155604051829161005c91906100f6565b604051809103906000f080158015610078573d6000803e3d6000fd5b50600480546001600160a01b0319166001600160a01b039290921691909117905550610112915050565b634e487b7160e01b600052604160045260246000fd5b6000602082840312156100c657600080fd5b81516001600160a01b03811681146100dd57600080fd5b9392505050565b6000602082840312156100e657600080fd5b815180151581146100dd57600080fd5b60006020828403121561010857600080fd5b815160ff811681146100dd57600080fd5b6106c7806101216000396000f3fe608060405234801561001057600080fd5b506004361061007d5760003560e01c806370a082311161005b57806370a08231146100f257806395d89b411461011b578063a9059cbb14610123578063dd62ed3e1461013657600080fd5b806306fdde0314610082578063095ea7b3146100a057806318160ddd146100c3575b600080fd5b61008a610149565b60405161009791906104f6565b60405180910390f35b6100b36100ae366004610567565b6101db565b6040519015158152602001610097565b6002545b604051908152602001610097565b6100c7610100366004610591565b6001600160a01b031660009081526020819052604090205490565b61008a6101f3565b6100b3610131366004610567565b610202565b6100c76101443660046105b3565b610210565b606060038054610158906105e6565b80601f0160208091040260200160405190810160405280929190818152602001828054610184906105e6565b80156101d15780601f106101a6576101008083540402835291602001916101d1565b820191906000526020600020905b8154815290600101906020018083116101b457829003601f168201915b5050505050905090565b6000336101e981858561023b565b5060019392505050565b606060048054610158906105e6565b6000336101e981858561024e565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b61024883838360016102c2565b505050565b6001600160a01b03831661027057604051634b637e8f60e11b8152600060048201526024015b60405180910390fd5b6001600160a01b03821661029a5760405163ec442f0560e01b815260006004820152602401610267565b610248838383610397565b6001600160a01b0382166102c75760405163ec442f0560e01b815260006004820152602401610267565b6102d360008383610397565b5050565b6001600160a01b03821661030157604051634b637e8f60e11b815260006004820152602401610267565b6102d382600083610397565b6001600160a01b0384166103365760405163e602df0560e01b815260006004820152602401610267565b6001600160a01b03831661036057604051634a1406b160e11b815260006004820152602401610267565b6001600160a01b038085166000908152600160209081526040808320938716835292905220829055801561039157826001600160a01b0316846001600160a01b03167f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b9258460405161038891815260200190565b60405180910390a35b50505050565b6001600160a01b0383166103c25780600260008282546103b79190610620565b909155506104349050565b6001600160a01b038316600090815260208190526040902054818110156104155760405163391434e360e21b81526001600160a01b03851660048201526024810182905260448101839052606401610267565b6001600160a01b03841660009081526020819052604090209082900390555b6001600160a01b0382166104505760028054829003905561046f565b6001600160a01b03821660009081526020819052604090208054820190555b816001600160a01b0316836001600160a01b03167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516104b491815260200190565b60405180910390a3505050565b60005b838110156104dc5781810151838201526020016104c4565b50506000910152565b60208152600082518060208401526105058160408501602087016104c1565b601f01601f19169190910160400192915050565b80356001600160a01b038116811461053057600080fd5b919050565b6000806040838503121561054757600080fd5b61055083610519565b946020939093013593505050565b60008060006060848603121561057257600080fd5b61057b84610519565b925061058960208501610519565b9150604084013590509250929050565b600181811c908216806105fa57607f821691505b60208210810361061a57634e487b7160e01b600052602260045260246000fd5b50919050565b8082018082111561064157634e487b7160e01b600052601160045260246000fd5b9291505056fea2646970667358221220f8b45ba5c9f45f3d48048c3c1b1f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f64736f6c63430008140033";
+
+declare global {
+  interface Window {
+    klaytn?: any;
+  }
+}
+
+function App() {
+  const [name, setName] = useState('');
+  const [symbol, setSymbol] = useState('');
+  const [account, setAccount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [contractAddress, setContractAddress] = useState('');
+
+  const connectWallet = async () => {
+    try {
+      if (window.klaytn) {
+        const accounts = await window.klaytn.enable();
+        setAccount(accounts[0]);
+      } else {
+        setError('Kaikas 지갑을 설치해주세요.');
+      }
+    } catch (err) {
+      setError('지갑 연결에 실패했습니다.');
+    }
+  };
+
+  const createToken = async () => {
+    if (!name || !symbol) {
+      setError('토큰 이름과 심볼을 입력해주세요.');
+      return;
+    }
+
+    if (!account) {
+      setError('지갑을 먼저 연결해주세요.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const web3 = new Web3(window.klaytn);
+      const KaiaToken = new web3.eth.Contract(KaiaTokenABI);
+      
+      const deploy = KaiaToken.deploy({
+        data: KaiaTokenBytecode,
+        arguments: [name, symbol, account]
+      });
+
+      const gas = await deploy.estimateGas();
+      const gasPrice = await web3.eth.getGasPrice();
+
+      const deployedContract = await deploy.send({
+        from: account,
+        gas: Math.floor(gas * 1.2), // 20% 더 많은 가스 사용
+        gasPrice: gasPrice
+      });
+
+      setSuccess(`토큰이 성공적으로 생성되었습니다! 컨트랙트 주소: ${deployedContract.options.address}`);
+      setContractAddress(deployedContract.options.address);
+    } catch (err) {
+      console.error(err);
+      setError('토큰 생성에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <Container maxWidth="sm">
+        <Box sx={{ my: 4 }}>
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+            <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ fontWeight: 'bold' }}>
+              Kaia 토큰 생성기
+            </Typography>
+            
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+              간단하게 Kaia 메인넷 토큰을 생성하세요
+            </Typography>
+
+            {!account ? (
+              <Button 
+                variant="contained" 
+                fullWidth 
+                onClick={connectWallet}
+                sx={{ mt: 2, py: 1.5 }}
+                size="large"
+              >
+                Kaikas 지갑 연결
+              </Button>
+            ) : (
+              <>
+                <Card variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        연결된 지갑
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography variant="body2" sx={{ mr: 1 }}>
+                          {`${account.slice(0, 6)}...${account.slice(-4)}`}
+                        </Typography>
+                        <Tooltip title="주소 복사">
+                          <IconButton size="small" onClick={() => copyToClipboard(account)}>
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+                
+                <TextField
+                  fullWidth
+                  label="토큰 이름"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  margin="normal"
+                  helperText="예: My Token"
+                />
+                
+                <TextField
+                  fullWidth
+                  label="토큰 심볼"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                  margin="normal"
+                  helperText="예: MTK"
+                />
+
+                <Box sx={{ mt: 3, mb: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    토큰 정보
+                  </Typography>
+                  <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2">총 발행량</Typography>
+                        <Typography variant="body2">1,000,000,000</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant="body2">사용자 지갑</Typography>
+                        <Typography variant="body2">990,000,000</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2">개발자 지갑</Typography>
+                        <Typography variant="body2">10,000,000</Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={createToken}
+                  disabled={loading}
+                  sx={{ mt: 2, py: 1.5 }}
+                  size="large"
+                >
+                  {loading ? <CircularProgress size={24} /> : '토큰 생성하기'}
+                </Button>
+              </>
+            )}
+
+            {error && (
+              <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {success && (
+              <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>
+                {success}
+              </Alert>
+            )}
+
+            {contractAddress && (
+              <Card variant="outlined" sx={{ mt: 2, borderRadius: 2 }}>
+                <CardContent>
+                  <Typography variant="subtitle2" gutterBottom>
+                    컨트랙트 주소
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ flex: 1 }}>
+                      {`${contractAddress.slice(0, 6)}...${contractAddress.slice(-4)}`}
+                    </Typography>
+                    <Tooltip title="주소 복사">
+                      <IconButton size="small" onClick={() => copyToClipboard(contractAddress)}>
+                        <ContentCopyIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
+          </Paper>
+        </Box>
+      </Container>
+    </ThemeProvider>
+  );
+}
+
+export default App; 
