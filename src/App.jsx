@@ -344,26 +344,25 @@ export default function App() {
       return;
     }
 
-    // ✅ Kaia Wallet 공식 딥링크 스킴 (문서 기준)
-    const deeplink = `kaiawallet://wc`; // WalletConnect 연동용
+    // ✅ 모바일 환경: Kaia Wallet 앱 스킴으로 직접 앱 열기
+    const currentUrl = window.location.href;
+    const storeUrl = isAndroid
+      ? 'https://play.google.com/store/apps/details?id=xyz.pentacle.kaiawallet'
+      : 'https://apps.apple.com/app/kaia-wallet/id6474977597';
 
-    // ✅ 앱 설치 확인용 timeout (앱이 없으면 스토어로 이동)
-    const fallbackTimer = setTimeout(() => {
-      const storeURL = isAndroid
-        ? "https://play.google.com/store/apps/details?id=xyz.pentacle.kaiawallet"
-        : "https://apps.apple.com/app/kaia-wallet/id6474977597";
-      window.location.href = storeURL;
-    }, 2000);
+    // 앱이 설치되어 있는지 확인
+    const isAppInstalled = isIOS
+      ? window.navigator.standalone
+      : document.referrer.includes('android-app://xyz.pentacle.kaiawallet');
 
-    // ✅ 앱 열기 시도
-    window.location.href = deeplink;
-
-    // ✅ 앱이 열렸다면 fallback 동작 취소
-    window.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
-        clearTimeout(fallbackTimer);
-      }
-    });
+    if (isAppInstalled) {
+      // 앱이 설치되어 있으면 바로 앱 스킴 실행
+      const kaiaUrl = `kaikas://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
+      window.location.href = kaiaUrl;
+    } else {
+      // 앱이 설치되어 있지 않으면 스토어로 이동
+      window.location.href = storeUrl;
+    }
   };
 
   const copyToClipboard = async (text) => {
