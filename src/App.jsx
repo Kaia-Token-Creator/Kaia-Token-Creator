@@ -320,8 +320,14 @@ export default function App() {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+              app: {
+                name: 'Kaia Token Creator',
+                url: window.location.origin
+              },
               type: 'auth',
-              chain: 'kaia'
+              chain: 'kaia',
+              redirect: true,
+              callback: window.location.href
             })
           });
 
@@ -335,7 +341,7 @@ export default function App() {
           }
 
           // 2. Request: 딥링크로 앱 호출
-          const walletUrl = `kaikas://wallet/api?request_key=${request_key}`;
+          const walletUrl = `kaiawallet://wallet/api?request_key=${request_key}&redirect=true`;
           window.location.href = walletUrl;
 
           // 3. Result: 결과 확인
