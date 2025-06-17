@@ -318,7 +318,6 @@ export default function App() {
 
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (!isMobile && !window.klaytn) {
       alert('Kaikas 지갑을 설치해주세요!');
@@ -326,28 +325,38 @@ export default function App() {
       return;
     }
 
-    if (isMobile) {
+    // 모바일에서 Kaia Wallet 브라우저(window.klaytn이 있는 경우)에서는 바로 연동
+    if (isMobile && window.klaytn) {
+      try {
+        setIsLoading(true);
+        const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
+        setAccount(accounts[0]);
+        setIsWalletConnected(true);
+        setNetworkVersion(window.klaytn.networkVersion);
+      } catch (error) {
+        console.error('지갑 연결 중 오류 발생:', error);
+        alert('지갑 연결에 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // 모바일에서 window.klaytn이 없으면(일반 브라우저) 딥링크로 앱 열기
+    if (isMobile && !window.klaytn) {
       const currentUrl = window.location.href;
       const storeUrl = isIOS
         ? 'https://apps.apple.com/app/kaia-wallet/id6502896387'
         : 'https://play.google.com/store/apps/details?id=io.klutch.wallet';
-
-      // Kaia Wallet 커스텀 스킴 사용
       const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
-
-      // 앱이 설치되어 있지 않은 경우를 위한 폴백
-      const openStore = () => {
-        window.location.href = storeUrl;
-      };
-
-      // 앱 열기 시도
       window.location.href = kaiaUrl;
-
-      // 앱이 열리지 않으면 스토어로 이동 (타임아웃 시간 증가)
-      setTimeout(openStore, 2000);
+      setTimeout(() => {
+        window.location.href = storeUrl;
+      }, 2000);
       return;
     }
 
+    // PC 환경에서는 기존 방식
     try {
       setIsLoading(true);
       const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
