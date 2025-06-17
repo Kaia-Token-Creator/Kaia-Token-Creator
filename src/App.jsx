@@ -306,51 +306,11 @@ export default function App() {
     }
   };
 
-  // 모바일 전용 Klip 연결 함수
-  const connectKlipMobile = async () => {
-    const isAndroid = /android/i.test(navigator.userAgent);
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    try {
-      // Klip A2A Prepare API 호출
-      const response = await fetch("https://a2a.klipwallet.com/v2/a2a/prepare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bapp: { name: "Kaia Token Creator" },
-          type: "auth",
-        }),
-      });
-      const { request_key } = await response.json();
-      if (!request_key) {
-        alert("Klip 연동 요청에 실패했습니다. 다시 시도해주세요.");
-        return;
-      }
-      // Klip 딥링크 URL 생성
-      const deeplink = `kakaotalk://klipwallet/open?url=https://klipwallet.com/?target=/a2a?request_key=${request_key}`;
-      window.location.href = deeplink;
-      // 앱이 없으면 스토어 fallback
-      const fallbackTimer = setTimeout(() => {
-        const storeURL = isAndroid
-          ? "https://play.google.com/store/apps/details?id=com.kakao.talk"
-          : "https://apps.apple.com/app/kakaotalk/id362057947";
-        window.location.href = storeURL;
-      }, 2000);
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") {
-          clearTimeout(fallbackTimer);
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Klip 연결에 실패했습니다. 다시 시도해주세요.");
-    }
-  };
-
   const handleWalletConnect = async () => {
     try {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       if (isMobile) {
-        await connectKlipMobile();
+        alert('PC환경에서 접속해주세요');
         return;
       }
       // PC/데스크탑: Kaia wallet(Kaikas) 확장 지갑 연결 그대로 유지
