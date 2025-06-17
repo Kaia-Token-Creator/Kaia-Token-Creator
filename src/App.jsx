@@ -316,13 +316,13 @@ export default function App() {
       if (isMobile) {
         // 현재 URL을 request_key로 사용
         const currentUrl = window.location.href;
-
+        
         if (isIOS) {
           // iOS의 경우 앱 스킴 사용
           window.location.href = `kaiawallet://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
         } else if (isAndroid) {
-          // Android의 경우 Intent URL 사용
-          window.location.href = `intent://wallet/api?request_key=${encodeURIComponent(currentUrl)}#Intent;scheme=kaikas;package=io.kaiawallet.app;end`;
+          // Android의 경우도 동일한 앱 스킴 사용
+          window.location.href = `kaiawallet://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
         }
         return;
       }
