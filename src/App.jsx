@@ -332,7 +332,7 @@ export default function App() {
     }
 
     // 모바일 환경에서 Kaia Wallet이 설치되어 있지 않은 경우
-    if (isMobile && !window.klaytn) {
+    if (isMobile) {
       if (isIOS) {
         alert('iOS용 Kaia Wallet을 설치해주세요!');
         window.open('https://apps.apple.com/kr/app/kaia-wallet/id6447391390', '_blank');
@@ -345,6 +345,16 @@ export default function App() {
 
     try {
       setIsLoading(true);
+      
+      // 모바일 환경에서는 Kaia Wallet의 브라우저를 통해 연결
+      if (isMobile) {
+        const currentUrl = window.location.href;
+        const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
+        window.location.href = kaiaUrl;
+        return;
+      }
+
+      // PC 환경에서는 기존 방식대로 연결
       const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
       setAccount(accounts[0]);
       setIsWalletConnected(true);
