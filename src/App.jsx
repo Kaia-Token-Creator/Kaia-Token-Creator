@@ -313,18 +313,42 @@ export default function App() {
       
       if (isMobile) {
         try {
-          // 모바일에서 Kaia Wallet 앱 호출
-          const walletUrl = 'kaiawallet://wallet';
-          window.location.href = walletUrl;
+          // 1. request_key 발급
+          const prepareResponse = await fetch('https://a2a.kaikas.io/api/prepare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'auth',
+              chain_id: 8217, // Kaia 메인넷
+            })
+          });
+          if (!prepareResponse.ok) throw new Error('request_key 발급 실패');
+          const { request_key } = await prepareResponse.json();
+          if (!request_key) throw new Error('request_key 없음');
 
-          // 앱이 없으면 스토어로 이동
-          setTimeout(() => {
+          // 2. 딥링크 URL 생성
+          const deeplink = `kaikas://wallet/api?request_key=${request_key}`;
+
+          // 3. 딥링크로 이동
+          window.location.href = deeplink;
+
+          // 4. fallback: 일정 시간 후에도 visibilitychange가 없으면 스토어로 이동
+          let fallbackTimeout = setTimeout(() => {
             const isAndroid = /android/i.test(navigator.userAgent);
-            const storeUrl = isAndroid 
-              ? 'market://details?id=io.kaiawallet.app'
-              : 'https://apps.apple.com/app/kaia-wallet/id1234567890';
+            const storeUrl = isAndroid
+              ? 'https://play.google.com/store/apps/details?id=xyz.pentacle.kaiawallet'
+              : 'https://apps.apple.com/app/kaia-wallet/id6474977597';
             window.location.href = storeUrl;
           }, 2000);
+
+          // 사용자가 앱으로 이동하면 페이지가 background로 가므로, visibilitychange로 fallback 취소
+          const handleVisibility = () => {
+            if (document.visibilityState === 'hidden') {
+              clearTimeout(fallbackTimeout);
+              document.removeEventListener('visibilitychange', handleVisibility);
+            }
+          };
+          document.addEventListener('visibilitychange', handleVisibility);
 
           return;
         } catch (error) {
