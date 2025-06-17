@@ -307,61 +307,41 @@ export default function App() {
   };
 
   const handleWalletConnect = async () => {
-    if (isWalletConnected) {
-      const confirmDisconnect = window.confirm('지갑 연결을 해제하시겠습니까?');
-      if (!confirmDisconnect) return;
-      setAccount('');
-      setIsWalletConnected(false);
-      setNetworkVersion('');
-      return;
-    }
+    try {
+      // 모바일 환경 체크
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
 
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isMobile = /android|iphone|ipad|ipod/.test(userAgent);
-    const isAndroid = /android/.test(userAgent);
-    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      if (isMobile) {
+        // 현재 URL을 request_key로 사용
+        const currentUrl = window.location.href;
 
-    if (!isMobile) {
-      // ✅ PC 환경이면 기존 방식 그대로 유지
-      if (!window.klaytn) {
-        alert('Kaikas 지갑을 설치해주세요!');
-        window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
+        if (isIOS) {
+          // iOS의 경우 앱 스킴 사용
+          window.location.href = `kaiawallet://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
+        } else if (isAndroid) {
+          // Android의 경우 Intent URL 사용
+          window.location.href = `intent://wallet/api?request_key=${encodeURIComponent(currentUrl)}#Intent;scheme=kaikas;package=io.kaiawallet.app;end`;
+        }
         return;
       }
 
-      try {
-        setIsLoading(true);
-        const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
-        setAccount(accounts[0]);
-        setIsWalletConnected(true);
-        setNetworkVersion(window.klaytn.networkVersion);
-      } catch (error) {
-        console.error('지갑 연결 중 오류 발생:', error);
-        alert('지갑 연결에 실패했습니다.');
-      } finally {
-        setIsLoading(false);
+      // PC 환경의 기존 로직 유지
+      if (window.klaytn) {
+        try {
+          const accounts = await window.klaytn.enable();
+          setAccount(accounts[0]);
+          setIsWalletConnected(true);
+        } catch (error) {
+          console.error('Klaytn 연결 실패:', error);
+        }
+      } else {
+        alert('Kaia Wallet을 설치해주세요.');
+        window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
       }
-      return;
-    }
-
-    // ✅ 모바일 환경: Kaia Wallet 앱 스킴으로 직접 앱 열기
-    const currentUrl = window.location.href;
-    const storeUrl = isAndroid
-      ? 'https://play.google.com/store/apps/details?id=xyz.pentacle.kaiawallet'
-      : 'https://apps.apple.com/app/kaia-wallet/id6474977597';
-
-    // 앱이 설치되어 있는지 확인
-    const isAppInstalled = isIOS
-      ? window.navigator.standalone
-      : document.referrer.includes('android-app://xyz.pentacle.kaiawallet');
-
-    if (isAppInstalled) {
-      // 앱이 설치되어 있으면 바로 앱 스킴 실행
-      const kaiaUrl = `kaikas://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
-      window.location.href = kaiaUrl;
-    } else {
-      // 앱이 설치되어 있지 않으면 스토어로 이동
-      window.location.href = storeUrl;
+    } catch (error) {
+      console.error('Wallet connection error:', error);
     }
   };
 
