@@ -328,7 +328,8 @@ export default function App() {
               url: window.location.origin
             },
             type: 'auth',
-            chain: 'kaia'
+            chain: 'kaia',
+            callback: window.location.origin
           }),
         });
         
@@ -342,7 +343,7 @@ export default function App() {
         }
 
         // 앱 스킴으로 이동
-        const walletUrl = `kaiawallet://request?request_key=${data.request_key}`;
+        const walletUrl = `kaiawallet://request?request_key=${data.request_key}&callback=${encodeURIComponent(window.location.origin)}`;
         console.log('Opening wallet URL:', walletUrl);
         
         // iOS와 Android 모두에서 동작하도록 수정
