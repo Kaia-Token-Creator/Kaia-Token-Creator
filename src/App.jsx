@@ -314,15 +314,15 @@ export default function App() {
       const isAndroid = /Android/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // 현재 URL을 request_key로 사용
-        const currentUrl = window.location.href;
+        // 고유한 request_key 생성
+        const requestKey = Math.random().toString(36).substring(2, 15);
         
         if (isIOS) {
           // iOS의 경우 앱 스킴 사용
-          window.location.href = `kaiawallet://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
+          window.location.href = `kaiawallet://wallet/api?request_key=${requestKey}`;
         } else if (isAndroid) {
           // Android의 경우도 동일한 앱 스킴 사용
-          window.location.href = `kaiawallet://wallet/api?request_key=${encodeURIComponent(currentUrl)}`;
+          window.location.href = `kaiawallet://wallet/api?request_key=${requestKey}`;
         }
         return;
       }
