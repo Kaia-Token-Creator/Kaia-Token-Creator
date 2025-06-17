@@ -332,10 +332,8 @@ export default function App() {
         ? 'https://apps.apple.com/app/kaia-wallet/id6502896387'
         : 'https://play.google.com/store/apps/details?id=io.klutch.wallet';
 
-      // Universal Link (iOS) 또는 App Link (Android) 사용
-      const kaiaUrl = isIOS
-        ? `https://wallet.kaia.io/browser?url=${encodeURIComponent(currentUrl)}`
-        : `https://wallet.kaia.io/browser?url=${encodeURIComponent(currentUrl)}`;
+      // Kaia Wallet 커스텀 스킴 사용
+      const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
 
       // 앱이 설치되어 있지 않은 경우를 위한 폴백
       const openStore = () => {
