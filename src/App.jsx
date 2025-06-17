@@ -307,54 +307,41 @@ export default function App() {
   };
 
   const handleWalletConnect = async () => {
-    // 이미 연결되어 있다면 연결 해제
     if (isWalletConnected) {
       const confirmDisconnect = window.confirm('지갑 연결을 해제하시겠습니까?');
-      if (!confirmDisconnect) {
-        return;
-      }
+      if (!confirmDisconnect) return;
       setAccount('');
       setIsWalletConnected(false);
       setNetworkVersion('');
       return;
     }
 
-    // 모바일 환경 체크
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
 
-    // PC 환경에서 Kaikas가 설치되어 있지 않은 경우
     if (!isMobile && !window.klaytn) {
       alert('Kaikas 지갑을 설치해주세요!');
       window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
       return;
     }
 
-    // 모바일 환경에서 Kaia Wallet이 설치되어 있지 않은 경우
     if (isMobile) {
-      if (isIOS) {
-        alert('iOS용 Kaia Wallet을 설치해주세요!');
-        window.open('https://apps.apple.com/app/kaia-wallet/id6502896387', '_blank');
-      } else if (isAndroid) {
-        alert('Android용 Kaia Wallet을 설치해주세요!');
-        window.open('https://play.google.com/store/apps/details?id=io.klutch.wallet', '_blank');
-      }
+      const currentUrl = window.location.href;
+      const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
+      const storeUrl = isIOS
+        ? 'https://apps.apple.com/app/kaia-wallet/id6502896387'
+        : 'https://play.google.com/store/apps/details?id=io.klutch.wallet';
+
+      window.location.href = kaiaUrl;
+      setTimeout(() => {
+        window.location.href = storeUrl;
+      }, 1200);
       return;
     }
 
     try {
       setIsLoading(true);
-      
-      // 모바일 환경에서는 Kaia Wallet의 브라우저를 통해 연결
-      if (isMobile) {
-        const currentUrl = window.location.href;
-        const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
-        window.location.href = kaiaUrl;
-        return;
-      }
-
-      // PC 환경에서는 기존 방식대로 연결
       const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
       setAccount(accounts[0]);
       setIsWalletConnected(true);
