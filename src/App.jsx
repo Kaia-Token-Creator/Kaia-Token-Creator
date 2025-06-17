@@ -313,77 +313,19 @@ export default function App() {
       
       if (isMobile) {
         try {
-          // 1. Prepare: request_key 발급
-          const prepareResponse = await fetch('https://api.kaiawallet.io/v1/prepare', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              app: {
-                name: 'Kaia Token Creator',
-                url: window.location.origin
-              },
-              type: 'auth',
-              chain: 'kaia',
-              redirect: true,
-              callback: window.location.href
-            })
-          });
-
-          if (!prepareResponse.ok) {
-            throw new Error('Prepare API 요청 실패');
-          }
-
-          const { request_key } = await prepareResponse.json();
-          if (!request_key) {
-            throw new Error('request_key 발급 실패');
-          }
-
-          // 2. Request: 딥링크로 앱 호출
-          const walletUrl = `kaiawallet://wallet/api?request_key=${request_key}&redirect=true`;
+          // 모바일에서 Kaia Wallet 앱 호출
+          const walletUrl = 'kaiawallet://wallet';
           window.location.href = walletUrl;
 
-          // 3. Result: 결과 확인
-          const checkResult = async () => {
-            try {
-              const resultResponse = await fetch(`https://api.kaiawallet.io/v1/result?request_key=${request_key}`);
-              if (!resultResponse.ok) {
-                return false;
-              }
+          // 앱이 없으면 스토어로 이동
+          setTimeout(() => {
+            const isAndroid = /android/i.test(navigator.userAgent);
+            const storeUrl = isAndroid 
+              ? 'market://details?id=io.kaiawallet.app'
+              : 'https://apps.apple.com/app/kaia-wallet/id1234567890';
+            window.location.href = storeUrl;
+          }, 2000);
 
-              const result = await resultResponse.json();
-              if (result.status === 'completed') {
-                setAccount(result.address);
-                setIsWalletConnected(true);
-                return true;
-              }
-              return false;
-            } catch (error) {
-              return false;
-            }
-          };
-
-          // 3초마다 결과 확인
-          let attempts = 0;
-          const maxAttempts = 20;
-          
-          const pollResult = async () => {
-            const isCompleted = await checkResult();
-            if (isCompleted) {
-              return;
-            }
-            
-            attempts++;
-            if (attempts >= maxAttempts) {
-              alert('지갑 연결 시간이 초과되었습니다. 다시 시도해주세요.');
-              return;
-            }
-            
-            setTimeout(pollResult, 3000);
-          };
-
-          setTimeout(pollResult, 3000);
           return;
         } catch (error) {
           console.error('Mobile wallet connection error:', error);
