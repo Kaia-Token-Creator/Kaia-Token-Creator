@@ -325,11 +325,32 @@ export default function App() {
       return;
     }
 
-    // 모바일에서 Kaia Wallet 인앱 브라우저로 이동
-    if (isMobile) {
-      const currentUrl = window.location.href;
-      const kaiaUrl = `https://app.kaiawallet.io/u/${encodeURIComponent(currentUrl)}`;
+    // 모바일: 인앱 브라우저로 이동 (도메인만 추출)
+    if (isMobile && !window.kaia) {
+      let domain = window.location.hostname;
+      // 만약 포트가 있으면 포함
+      if (window.location.port) {
+        domain += ':' + window.location.port;
+      }
+      const kaiaUrl = `https://app.kaiawallet.io/u/${domain}/`;
       window.location.href = kaiaUrl;
+      return;
+    }
+
+    // 인앱 브라우저에서 자동 연동
+    if (isMobile && window.kaia) {
+      try {
+        setIsLoading(true);
+        const accounts = await window.kaia.request({ method: 'kaia_requestAccounts' });
+        setAccount(accounts[0]);
+        setIsWalletConnected(true);
+        setNetworkVersion(window.kaia.networkVersion);
+      } catch (error) {
+        console.error('지갑 연결 중 오류 발생:', error);
+        alert('지갑 연결에 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -347,28 +368,6 @@ export default function App() {
       setIsLoading(false);
     }
   };
-
-  // Kaia Wallet 인앱 브라우저에서 window.kaia 객체가 로드되면 자동으로 지갑 연동
-  useEffect(() => {
-    const checkKaiaWallet = async () => {
-      if (window.kaia && !isWalletConnected) {
-        try {
-          setIsLoading(true);
-          const accounts = await window.kaia.request({ method: 'kaia_requestAccounts' });
-          setAccount(accounts[0]);
-          setIsWalletConnected(true);
-          setNetworkVersion(window.kaia.networkVersion);
-        } catch (error) {
-          console.error('지갑 연결 중 오류 발생:', error);
-          alert('지갑 연결에 실패했습니다.');
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    checkKaiaWallet();
-  }, [isWalletConnected]);
 
   const copyToClipboard = async (text) => {
     try {
