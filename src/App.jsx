@@ -315,11 +315,11 @@ export default function App() {
 
       if (isMobile) {
         // Kaia Wallet API에서 request_key 발급
-        const res = await fetch('https://a2a-api.klipwallet.com/v2/a2a/prepare', {
+        const res = await fetch('https://api.kaia.io/v1/wallet/request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            bapp: { name: 'Kaia Token Creator' },
+            app: { name: 'Kaia Token Creator' },
             type: 'auth',
             chain: 'klaytn',
           }),
@@ -333,12 +333,12 @@ export default function App() {
         // request_key 상태 확인을 위한 폴링 함수
         const checkRequestStatus = async () => {
           try {
-            const statusRes = await fetch(`https://a2a-api.klipwallet.com/v2/a2a/result?request_key=${request_key}`);
+            const statusRes = await fetch(`https://api.kaia.io/v1/wallet/status?request_key=${request_key}`);
             const statusData = await statusRes.json();
             
             if (statusData.status === 'completed') {
               // 지갑 연결 성공
-              setAccount(statusData.klaytn_address);
+              setAccount(statusData.address);
               setIsWalletConnected(true);
               return true;
             } else if (statusData.status === 'failed') {
@@ -353,7 +353,7 @@ export default function App() {
         };
 
         // 앱 스킴으로 이동
-        window.location.href = `kaiawallet://wallet/api?request_key=${request_key}`;
+        window.location.href = `kaiawallet://wallet/connect?request_key=${request_key}`;
 
         // 3초 후부터 상태 확인 시작
         setTimeout(async () => {
