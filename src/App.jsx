@@ -314,16 +314,66 @@ export default function App() {
       const isAndroid = /Android/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // 고유한 request_key 생성
-        const requestKey = Math.random().toString(36).substring(2, 15);
-        
-        if (isIOS) {
-          // iOS의 경우 앱 스킴 사용
-          window.location.href = `kaiawallet://wallet/api?request_key=${requestKey}`;
-        } else if (isAndroid) {
-          // Android의 경우도 동일한 앱 스킴 사용
-          window.location.href = `kaiawallet://wallet/api?request_key=${requestKey}`;
+        // Kaia Wallet API에서 request_key 발급
+        const res = await fetch('https://a2a-api.klipwallet.com/v2/a2a/prepare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bapp: { name: 'Kaia Token Creator' },
+            type: 'auth',
+            chain: 'klaytn',
+          }),
+        });
+        const { request_key } = await res.json();
+        if (!request_key) {
+          alert('Kaia Wallet 연동용 request_key 발급에 실패했습니다.');
+          return;
         }
+
+        // request_key 상태 확인을 위한 폴링 함수
+        const checkRequestStatus = async () => {
+          try {
+            const statusRes = await fetch(`https://a2a-api.klipwallet.com/v2/a2a/result?request_key=${request_key}`);
+            const statusData = await statusRes.json();
+            
+            if (statusData.status === 'completed') {
+              // 지갑 연결 성공
+              setAccount(statusData.klaytn_address);
+              setIsWalletConnected(true);
+              return true;
+            } else if (statusData.status === 'failed') {
+              alert('지갑 연결에 실패했습니다.');
+              return true;
+            }
+            return false;
+          } catch (error) {
+            console.error('Request status check failed:', error);
+            return false;
+          }
+        };
+
+        // 앱 스킴으로 이동
+        window.location.href = `kaiawallet://wallet/api?request_key=${request_key}`;
+
+        // 3초 후부터 상태 확인 시작
+        setTimeout(async () => {
+          let isCompleted = false;
+          let attempts = 0;
+          const maxAttempts = 20; // 최대 20번 시도 (약 1분)
+
+          while (!isCompleted && attempts < maxAttempts) {
+            isCompleted = await checkRequestStatus();
+            if (!isCompleted) {
+              await new Promise(resolve => setTimeout(resolve, 3000)); // 3초 대기
+              attempts++;
+            }
+          }
+
+          if (!isCompleted) {
+            alert('지갑 연결 시간이 초과되었습니다. 다시 시도해주세요.');
+          }
+        }, 3000);
+
         return;
       }
 
