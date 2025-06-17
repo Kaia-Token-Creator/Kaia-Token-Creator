@@ -328,15 +328,25 @@ export default function App() {
 
     if (isMobile) {
       const currentUrl = window.location.href;
-      const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
       const storeUrl = isIOS
         ? 'https://apps.apple.com/app/kaia-wallet/id6502896387'
         : 'https://play.google.com/store/apps/details?id=io.klutch.wallet';
 
-      window.location.href = kaiaUrl;
-      setTimeout(() => {
+      // Universal Link (iOS) 또는 App Link (Android) 사용
+      const kaiaUrl = isIOS
+        ? `https://wallet.kaia.io/browser?url=${encodeURIComponent(currentUrl)}`
+        : `https://wallet.kaia.io/browser?url=${encodeURIComponent(currentUrl)}`;
+
+      // 앱이 설치되어 있지 않은 경우를 위한 폴백
+      const openStore = () => {
         window.location.href = storeUrl;
-      }, 1200);
+      };
+
+      // 앱 열기 시도
+      window.location.href = kaiaUrl;
+
+      // 앱이 열리지 않으면 스토어로 이동
+      setTimeout(openStore, 1000);
       return;
     }
 
