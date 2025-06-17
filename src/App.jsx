@@ -327,7 +327,8 @@ export default function App() {
               name: 'Kaia Token Creator',
               url: window.location.origin
             },
-            type: 'auth'
+            type: 'auth',
+            chain: 'kaia'
           }),
         });
         
