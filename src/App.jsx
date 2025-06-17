@@ -316,51 +316,54 @@ export default function App() {
       return;
     }
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isMobile = /android|iphone|ipad|ipod/.test(userAgent);
+    const isAndroid = /android/.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
 
-    if (!isMobile && !window.klaytn) {
-      alert('Kaikas 지갑을 설치해주세요!');
-      window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
-      return;
-    }
+    if (!isMobile) {
+      // ✅ PC 환경이면 기존 방식 그대로 유지
+      if (!window.klaytn) {
+        alert('Kaikas 지갑을 설치해주세요!');
+        window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
+        return;
+      }
 
-    // 모바일: Kaia Wallet 앱 스킴으로 직접 앱 열기
-    if (isMobile) {
-      const currentUrl = window.location.href;
-      const storeUrl = isIOS
-        ? 'https://apps.apple.com/app/kaia-wallet/id6502896387'
-        : 'https://play.google.com/store/apps/details?id=io.klutch.wallet';
-
-      // 앱이 설치되어 있는지 확인
-      const isAppInstalled = isIOS
-        ? window.navigator.standalone
-        : document.referrer.includes('android-app://io.klutch.wallet');
-
-      if (isAppInstalled) {
-        // 앱이 설치되어 있으면 바로 앱 스킴 실행
-        const kaiaUrl = `kaia://connect?url=${encodeURIComponent(currentUrl)}`;
-        window.location.href = kaiaUrl;
-      } else {
-        // 앱이 설치되어 있지 않으면 스토어로 이동
-        window.location.href = storeUrl;
+      try {
+        setIsLoading(true);
+        const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
+        setAccount(accounts[0]);
+        setIsWalletConnected(true);
+        setNetworkVersion(window.klaytn.networkVersion);
+      } catch (error) {
+        console.error('지갑 연결 중 오류 발생:', error);
+        alert('지갑 연결에 실패했습니다.');
+      } finally {
+        setIsLoading(false);
       }
       return;
     }
 
-    // PC 환경에서는 기존 방식
-    try {
-      setIsLoading(true);
-      const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
-      setAccount(accounts[0]);
-      setIsWalletConnected(true);
-      setNetworkVersion(window.klaytn.networkVersion);
-    } catch (error) {
-      console.error('지갑 연결 중 오류 발생:', error);
-      alert('지갑 연결에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
+    // ✅ Kaia Wallet 공식 딥링크 스킴 (문서 기준)
+    const deeplink = `kaiawallet://wc`; // WalletConnect 연동용
+
+    // ✅ 앱 설치 확인용 timeout (앱이 없으면 스토어로 이동)
+    const fallbackTimer = setTimeout(() => {
+      const storeURL = isAndroid
+        ? "https://play.google.com/store/apps/details?id=xyz.pentacle.kaiawallet"
+        : "https://apps.apple.com/app/kaia-wallet/id6474977597";
+      window.location.href = storeURL;
+    }, 2000);
+
+    // ✅ 앱 열기 시도
+    window.location.href = deeplink;
+
+    // ✅ 앱이 열렸다면 fallback 동작 취소
+    window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        clearTimeout(fallbackTimer);
+      }
+    });
   };
 
   const copyToClipboard = async (text) => {
