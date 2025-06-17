@@ -310,37 +310,60 @@ export default function App() {
     try {
       // 모바일 환경 체크
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      console.log('Mobile check:', isMobile); // 디버깅 로그
+      console.log('Mobile check:', isMobile);
 
       if (isMobile) {
-        console.log('Mobile wallet connection started'); // 디버깅 로그
+        console.log('Mobile wallet connection started');
         
         // Kaia Wallet API에서 request_key 발급
         const res = await fetch('https://wallet-api.kaia.io/v1/request', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({
-            app: { name: 'Kaia Token Creator' },
+            app: { 
+              name: 'Kaia Token Creator',
+              url: window.location.origin
+            },
             type: 'auth'
           }),
         });
         
-        console.log('API response:', res); // 디버깅 로그
-        const { request_key } = await res.json();
+        console.log('API response:', res);
+        const data = await res.json();
+        console.log('Response data:', data);
         
-        if (!request_key) {
+        if (!data.request_key) {
           alert('Kaia Wallet 연동용 request_key 발급에 실패했습니다.');
           return;
         }
 
-        console.log('Request key received:', request_key); // 디버깅 로그
+        // 앱 스킴으로 이동
+        const walletUrl = `kaiawallet://request?request_key=${data.request_key}`;
+        console.log('Opening wallet URL:', walletUrl);
+        
+        // iOS와 Android 모두에서 동작하도록 수정
+        const openWallet = () => {
+          window.location.href = walletUrl;
+        };
+
+        // 앱이 설치되어 있지 않은 경우를 대비한 폴백
+        const fallback = () => {
+          alert('Kaia Wallet 앱이 설치되어 있지 않습니다. 앱을 설치해주세요.');
+          window.open('https://play.google.com/store/apps/details?id=io.kaia.wallet', '_blank');
+        };
+
+        // 앱 실행 시도
+        openWallet();
 
         // request_key 상태 확인을 위한 폴링 함수
         const checkRequestStatus = async () => {
           try {
-            const statusRes = await fetch(`https://wallet-api.kaia.io/v1/status?request_key=${request_key}`);
+            const statusRes = await fetch(`https://wallet-api.kaia.io/v1/status?request_key=${data.request_key}`);
             const statusData = await statusRes.json();
-            console.log('Status check:', statusData); // 디버깅 로그
+            console.log('Status check:', statusData);
             
             if (statusData.status === 'completed') {
               // 지갑 연결 성공
@@ -357,11 +380,6 @@ export default function App() {
             return false;
           }
         };
-
-        // 앱 스킴으로 이동
-        const walletUrl = `kaiawallet://request?request_key=${request_key}`;
-        console.log('Opening wallet URL:', walletUrl); // 디버깅 로그
-        window.location.href = walletUrl;
 
         // 3초 후부터 상태 확인 시작
         setTimeout(async () => {
@@ -400,6 +418,7 @@ export default function App() {
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
+      alert('지갑 연결 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
   };
 
