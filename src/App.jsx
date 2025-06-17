@@ -356,7 +356,22 @@ export default function App() {
         await connectKaiaWalletMobile();
         return;
       }
-      // ... 기존 PC 연결 로직 유지 ...
+      // PC/데스크탑: Kaikas(Kaia) 확장 지갑 연결
+      if (window.klaytn) {
+        try {
+          const accounts = await window.klaytn.enable();
+          if (accounts && accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsWalletConnected(true);
+          }
+        } catch (error) {
+          console.error('Klaytn wallet connection error:', error);
+          alert('지갑 연결에 실패했습니다. 다시 시도해주세요.');
+        }
+      } else {
+        alert('Kaikas(Kaia) 지갑을 설치해주세요.');
+        window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
+      }
     } catch (error) {
       console.error('Wallet connection error:', error);
       alert('지갑 연결에 실패했습니다. 다시 시도해주세요.');
