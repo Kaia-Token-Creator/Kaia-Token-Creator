@@ -325,14 +325,14 @@ export default function App() {
       return;
     }
 
-    // 모바일에서 Kaia Wallet 브라우저(window.klaytn이 있는 경우)에서는 바로 연동
-    if (isMobile && window.klaytn) {
+    // 모바일에서 Kaia Wallet 브라우저(window.kaia가 있는 경우)에서는 바로 연동
+    if (isMobile && window.kaia) {
       try {
         setIsLoading(true);
-        const accounts = await window.klaytn.request({ method: 'klay_requestAccounts' });
+        const accounts = await window.kaia.request({ method: 'kaia_requestAccounts' });
         setAccount(accounts[0]);
         setIsWalletConnected(true);
-        setNetworkVersion(window.klaytn.networkVersion);
+        setNetworkVersion(window.kaia.networkVersion);
       } catch (error) {
         console.error('지갑 연결 중 오류 발생:', error);
         alert('지갑 연결에 실패했습니다.');
@@ -342,17 +342,16 @@ export default function App() {
       return;
     }
 
-    // 모바일에서 window.klaytn이 없으면(일반 브라우저) 딥링크로 앱 열기
-    if (isMobile && !window.klaytn) {
+    // 모바일에서 window.kaia가 없으면(일반 브라우저) Kaia Wallet 인앱 브라우저로 이동
+    if (isMobile && !window.kaia) {
       const currentUrl = window.location.href;
       const storeUrl = isIOS
         ? 'https://apps.apple.com/app/kaia-wallet/id6502896387'
         : 'https://play.google.com/store/apps/details?id=io.klutch.wallet';
-      const kaiaUrl = `kaia://browser?url=${encodeURIComponent(currentUrl)}`;
+      
+      // Kaia Wallet 인앱 브라우저로 이동
+      const kaiaUrl = `https://app.kaiawallet.io/u/${encodeURIComponent(currentUrl)}`;
       window.location.href = kaiaUrl;
-      setTimeout(() => {
-        window.location.href = storeUrl;
-      }, 2000);
       return;
     }
 
