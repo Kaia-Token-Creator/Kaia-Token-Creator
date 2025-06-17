@@ -343,8 +343,8 @@ export default function App() {
       // 앱 열기 시도
       window.location.href = kaiaUrl;
 
-      // 앱이 열리지 않으면 스토어로 이동
-      setTimeout(openStore, 1000);
+      // 앱이 열리지 않으면 스토어로 이동 (타임아웃 시간 증가)
+      setTimeout(openStore, 2000);
       return;
     }
 
