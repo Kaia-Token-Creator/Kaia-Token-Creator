@@ -8,22 +8,25 @@ import Web3 from 'web3'
 
 const PageWrap = styled.div`
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background: #f5f5f5;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-x: hidden;
+  box-sizing: border-box;
 `;
 
 const CenterWrap = styled.div`
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
 `;
 
 const Container = styled.div`
@@ -39,22 +42,22 @@ const Container = styled.div`
   position: relative;
   box-sizing: border-box;
   @media (max-width: 700px) {
-    max-width: 98vw;
-    padding: 32px 8px 32px 8px;
+    max-width: 100%;
+    padding: 32px 16px;
     border-radius: 22px;
   }
 `;
 
 const TopBar = styled.div`
   position: absolute;
-  top: 24px;
+  top: 180px;
   right: 32px;
   display: flex;
   align-items: center;
   gap: 16px;
   z-index: 10;
   @media (max-width: 700px) {
-    top: 10px;
+    top: 160px;
     right: 8px;
     gap: 8px;
   }
@@ -98,14 +101,14 @@ const IconLink = styled(TopLink)`
 `;
 
 const TitleSection = styled.div`
-  margin-top: 140px;
+  margin-top: 260px;
   margin-bottom: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   @media (max-width: 700px) {
-    margin-top: 90px;
+    margin-top: 220px;
   }
 `;
 
