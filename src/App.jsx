@@ -335,10 +335,10 @@ export default function App() {
     if (isMobile) {
       if (isIOS) {
         alert('iOS용 Kaia Wallet을 설치해주세요!');
-        window.open('https://apps.apple.com/kr/app/kaia-wallet/id6447391390', '_blank');
+        window.open('https://apps.apple.com/app/kaia-wallet/id6502896387', '_blank');
       } else if (isAndroid) {
         alert('Android용 Kaia Wallet을 설치해주세요!');
-        window.open('https://play.google.com/store/apps/details?id=com.kaia.wallet', '_blank');
+        window.open('https://play.google.com/store/apps/details?id=io.klutch.wallet', '_blank');
       }
       return;
     }
