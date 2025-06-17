@@ -310,51 +310,46 @@ export default function App() {
     try {
       // 모바일 환경 체크
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      console.log('Mobile check:', isMobile);
 
       if (isMobile) {
-        console.log('Mobile wallet connection started');
         try {
-          // CORS 프록시를 통한 Kaia Wallet API 요청
-          const corsProxy = 'https://corsproxy.io/?';
-          const apiUrl = 'https://api.kaiawallet.io/v1/prepare';
-          
-          const res = await fetch(corsProxy + encodeURIComponent(apiUrl), {
+          // 1. Prepare: request_key 발급
+          const prepareResponse = await fetch('https://api.kaiawallet.io/v1/prepare', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Origin': window.location.origin,
-              'X-Requested-With': 'XMLHttpRequest'
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               type: 'auth',
-              chain: 'kaia',
-              redirect: true,
-              callback: window.location.origin
-            }),
+              chain: 'kaia'
+            })
           });
 
-          const data = await res.json();
-          if (!data.request_key) {
-            alert('Kaia Wallet 연동용 request_key 발급에 실패했습니다.');
-            return;
+          if (!prepareResponse.ok) {
+            throw new Error('Prepare API 요청 실패');
           }
 
-          const walletUrl = `kaiawallet://wallet/api?request_key=${data.request_key}`;
+          const { request_key } = await prepareResponse.json();
+          if (!request_key) {
+            throw new Error('request_key 발급 실패');
+          }
+
+          // 2. Request: 딥링크로 앱 호출
+          const walletUrl = `kaiawallet://wallet/api?request_key=${request_key}`;
           window.location.href = walletUrl;
 
-          // Result 단계도 CORS 프록시 사용
-          const checkRequestStatus = async () => {
+          // 3. Result: 결과 확인
+          const checkResult = async () => {
             try {
-              const statusRes = await fetch(corsProxy + encodeURIComponent(`https://api.kaiawallet.io/v1/result?request_key=${data.request_key}`));
-              const statusData = await statusRes.json();
-              if (statusData.status === 'completed') {
-                setAccount(statusData.address);
+              const resultResponse = await fetch(`https://api.kaiawallet.io/v1/result?request_key=${request_key}`);
+              if (!resultResponse.ok) {
+                return false;
+              }
+
+              const result = await resultResponse.json();
+              if (result.status === 'completed') {
+                setAccount(result.address);
                 setIsWalletConnected(true);
-                return true;
-              } else if (statusData.status === 'failed') {
-                alert('지갑 연결에 실패했습니다.');
                 return true;
               }
               return false;
@@ -363,26 +358,30 @@ export default function App() {
             }
           };
 
-          setTimeout(async () => {
-            let isCompleted = false;
-            let attempts = 0;
-            const maxAttempts = 20;
-            while (!isCompleted && attempts < maxAttempts) {
-              isCompleted = await checkRequestStatus();
-              if (!isCompleted) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                attempts++;
-              }
+          // 3초마다 결과 확인
+          let attempts = 0;
+          const maxAttempts = 20;
+          
+          const pollResult = async () => {
+            const isCompleted = await checkResult();
+            if (isCompleted) {
+              return;
             }
-            if (!isCompleted) {
+            
+            attempts++;
+            if (attempts >= maxAttempts) {
               alert('지갑 연결 시간이 초과되었습니다. 다시 시도해주세요.');
+              return;
             }
-          }, 3000);
+            
+            setTimeout(pollResult, 3000);
+          };
 
+          setTimeout(pollResult, 3000);
           return;
-        } catch (apiError) {
-          console.error('API Error:', apiError);
-          alert('Kaia Wallet API 요청에 실패했습니다. 다시 시도해주세요.');
+        } catch (error) {
+          console.error('Mobile wallet connection error:', error);
+          alert('Kaia Wallet 연결에 실패했습니다. 다시 시도해주세요.');
           return;
         }
       }
