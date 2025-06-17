@@ -319,9 +319,27 @@ export default function App() {
       return;
     }
 
-    if (!window.klaytn) {
+    // 모바일 환경 체크
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    // PC 환경에서 Kaikas가 설치되어 있지 않은 경우
+    if (!isMobile && !window.klaytn) {
       alert('Kaikas 지갑을 설치해주세요!');
       window.open('https://chrome.google.com/webstore/detail/kaikas/jblndlipeogpafnldhgmapagcccfchpi', '_blank');
+      return;
+    }
+
+    // 모바일 환경에서 Kaia Wallet이 설치되어 있지 않은 경우
+    if (isMobile && !window.klaytn) {
+      if (isIOS) {
+        alert('iOS용 Kaia Wallet을 설치해주세요!');
+        window.open('https://apps.apple.com/kr/app/kaia-wallet/id6447391390', '_blank');
+      } else if (isAndroid) {
+        alert('Android용 Kaia Wallet을 설치해주세요!');
+        window.open('https://play.google.com/store/apps/details?id=com.kaia.wallet', '_blank');
+      }
       return;
     }
 
