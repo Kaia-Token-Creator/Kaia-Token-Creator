@@ -313,15 +313,21 @@ export default function App() {
 
       if (isMobile) {
         try {
-          // 1. Prepare: request_key 발급
+          // 1. Prepare: request_key 발급 (공식 문서대로 정확히 구현)
           const prepareResponse = await fetch('https://api.kaiawallet.io/v1/prepare', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+              app: {
+                name: 'Kaia Token Creator',
+                url: window.location.origin
+              },
               type: 'auth',
-              chain: 'kaia'
+              chain: 'kaia',
+              redirect: true,
+              callback: window.location.href
             })
           });
 
@@ -334,8 +340,8 @@ export default function App() {
             throw new Error('request_key 발급 실패');
           }
 
-          // 2. Request: 딥링크로 앱 호출
-          const walletUrl = `kaiawallet://wallet/api?request_key=${request_key}`;
+          // 2. Request: 딥링크로 앱 호출 (공식 문서대로 정확히 구현)
+          const walletUrl = `kaiawallet://wallet/api?request_key=${request_key}&redirect=true`;
           window.location.href = walletUrl;
 
           // 3. Result: 결과 확인
