@@ -449,7 +449,7 @@ export default function App() {
           <TopBar>
             <TopLink href="https://kaia-token-creator.gitbook.io/kaia-token-creator/guide" target="_blank" rel="noopener noreferrer">가이드</TopLink>
             <TopLink href="https://kaia-token-creator.gitbook.io/kaia-token-creator" target="_blank" rel="noopener noreferrer">DOCS</TopLink>
-            <IconLink href="https://t.me/officailKTC" target="_blank" rel="noopener noreferrer"><FaTelegramPlane size={20} /></IconLink>
+            <IconLink href="https://t.me/officialKTC" target="_blank" rel="noopener noreferrer"><FaTelegramPlane size={20} /></IconLink>
             <IconLink 
               as="button" 
               onClick={handleWalletConnect} 
